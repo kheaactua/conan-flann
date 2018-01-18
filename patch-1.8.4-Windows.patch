@@ -1,0 +1,15 @@
+diff --git a/src/cpp/flann/util/serialization.h b/src/cpp/flann/util/serialization.h
+index 885192b..62fa7b7 100644
+--- a/src/cpp/flann/util/serialization.h
++++ b/src/cpp/flann/util/serialization.h
+@@ -57,6 +57,10 @@ struct Serializer<type> \
+     }\
+ }
+ 
++#ifdef _MSC_VER
++BASIC_TYPE_SERIALIZER(unsigned __int64);
++#endif
++
+ #define ENUM_SERIALIZER(type)\
+ template<>\
+ struct Serializer<type>\
