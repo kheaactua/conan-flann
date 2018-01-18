@@ -15,12 +15,15 @@ class FlannConan(ConanFile):
     generators = "cmake"
 
     def source(self):
-        self.run("git clone https://github.com/qhull/qhull.git %s-%s"%(self.name, self.version))
+        self.run("git clone https://github.com/mariusmuja/flann flann-src")
+        self.run("cd flann-src && git checkout %s"%(self.version))
 
-        self.run("cd %s-%s && git checkout %s"%(self.name, self.version, self.version_commit))
+        patch_file = 'patch-%s-%s.patch'%(self.version, self.settings.os)
+        if os.path.exists(patch_file):
+            tools.patch(patch_file=patch_file)
 
         # # Download source from an archive
-        # zip_name = "flann-1.8.4-src.zip"
+        # zip_name = "flann-%s-src.zip"%self.version
         # download("http://www.cs.ubc.ca/research/flann/uploads/FLANN/flann-%s-src.zip"%self.version, zip_name)
         # unzip(zip_name)
         # shutil.move("flann-%s-src"%self.version, "flann")
