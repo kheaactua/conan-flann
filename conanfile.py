@@ -28,12 +28,6 @@ class FlannConan(ConanFile):
             # tools.patch(patch_file=patch_file)
             self.run("cd flann-src && git apply %s"%(patch_file))
 
-        # # Download source from an archive
-        # zip_name = "flann-%s-src.zip"%self.version
-        # download("http://www.cs.ubc.ca/research/flann/uploads/FLANN/flann-%s-src.zip"%self.version, zip_name)
-        # unzip(zip_name)
-        # shutil.move("flann-%s-src"%self.version, "flann-src")
-
     def build(self):
         cmake = CMake(self)
         args  = []
@@ -44,7 +38,9 @@ class FlannConan(ConanFile):
         self.run("cmake --build . --target install %s"%cmake.build_config)
 
     def package(self):
+        # Package was setup with cmake install, so no need to specify how to
+        # build the package
         pass
 
     def package_info(self):
-        self.cpp_info.libs = []
+        pass
