@@ -13,6 +13,9 @@ class FlannConan(ConanFile):
     default_options = "shared=True"
     generators      = "cmake"
     exports         = "patch*"
+    requires = (
+        'gtest/[>=1.8.0]@lasote/stable',
+    )
 
     def source(self):
         hashes = {
@@ -41,9 +44,10 @@ class FlannConan(ConanFile):
 
         args  = []
         args.append('-DBUILD_SHARED_LIBS:BOOL=%s'%('TRUE' if self.options.shared else 'FALSE'))
+        args.append('-DGTEST_ROOT:PATH=%s'%self.deps_cpp_info['gtest'].rootpath)
 
         cmake = CMake(self)
-        cmake.configure(source_folder='flann-src')
+        cmake.configure(source_folder='flann-src', args=args)
         cmake.build()
         cmake.install()
 
