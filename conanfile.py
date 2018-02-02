@@ -4,8 +4,6 @@ from conans import ConanFile, CMake, tools
 
 class FlannConan(ConanFile):
     name            = "flann"
-    version         = "1.8.4"
-    # version         = "1.9.1"
     license         = "BSD"
     url             = "http://www.cs.ubc.ca/research/flann/"
     settings        = "os", "compiler", "build_type", "arch"
