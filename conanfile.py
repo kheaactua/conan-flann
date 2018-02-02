@@ -1,9 +1,6 @@
+import os, shutil
 from conans import ConanFile, CMake, tools
-from conans.tools import patch # Add unzip, and download  to use a zip file
-import os
-import shutil
 
-import inspect
 
 class FlannConan(ConanFile):
     name            = "flann"
@@ -18,28 +15,39 @@ class FlannConan(ConanFile):
     exports         = "patch*"
 
     def source(self):
-        self.run("git clone https://github.com/mariusmuja/flann flann-src")
-        self.run("cd flann-src && git checkout %s"%(self.version))
+        hashes = {
+            '1.8.4': '774b74580e3cbc5b0d45c6ec345a64ae',
+            '1.9.1': '73adef1c7bf8e8b978987e7860926ea6',
+        }
 
-        patch_file = os.path.join(os.path.dirname(inspect.stack()[0][1]), 'patch-%s-%s.patch'%(self.version, self.settings.os))
+        if self.version in hashes:
+            archive = f'{self.version}.tar.gz'
+            tools.download(
+                url=f'https://github.com/mariusmuja/flann/archive/{archive}',
+                filename=archive
+            )
+            tools.check_md5(archive, hashes[self.version])
+            tools.unzip(archive)
+            shutil.move(f'flann-{self.version}', 'flann-src')
+        else:
+            self.run("git clone https://github.com/mariusmuja/flann flann-src")
+            self.run("cd flann-src && git checkout %s"%(self.version))
+
+        patch_file = f'patch-{self.version}-{self.settings.os}.patch'
         if os.path.exists(patch_file):
-            # Couldn't get tools.patch to work, maybe because the file was
-            # generated in git?  Or maybe it's one directory off?
-            # tools.patch(patch_file=patch_file)
-            self.run("cd flann-src && git apply %s"%(patch_file))
+            tools.patch(patch_file=patch_file, base_path='flann-src')
 
     def build(self):
-        cmake = CMake(self)
-        args  = []
-        args.append("-DBUILD_SHARED_LIBS=ON" if self.options.shared else "")
-        args.append('-DCMAKE_INSTALL_PREFIX="%s"'%self.package_folder)
 
-        self.run('cmake flann-src %s %s'%(cmake.command_line, ' '.join(args)))
-        self.run("cmake --build . --target install %s"%cmake.build_config)
+        args  = []
+        args.append('-DBUILD_SHARED_LIBS:BOOL=%s'%('TRUE' if self.options.shared else 'FALSE'))
+
+        cmake = CMake(self)
+        cmake.configure(source_folder='flann-src')
+        cmake.build()
+        cmake.install()
 
     def package(self):
-        # Package was setup with cmake install, so no need to specify how to
-        # build the package
         pass
 
     def package_info(self):
