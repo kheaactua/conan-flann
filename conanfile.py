@@ -53,6 +53,16 @@ class FlannConan(ConanFile):
         pass
 
     def package_info(self):
-        self.cpp_info.libs += ['flann', 'flann_cpp_s', 'flann_s']
+        libs = ['flann', 'flann_cpp_s', 'flann_s']
+        if 'Linux' == self.settings.os:
+            prefix = 'lib'
+            suffix = 'so' if self.options.shared else 'a'
+        else:
+            prefix = ''
+            suffix = 'lib'
+
+        self.cpp_info.libs += list(map(lambda lib: f'{prefix}{lib}.{suffix}', libs))
 
         pass
+
+# vim: ts=4 sw=4 expandtab ffs=unix ft=python foldmethod=marker :
