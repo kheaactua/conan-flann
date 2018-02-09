@@ -3,14 +3,14 @@ from conans import ConanFile, CMake, tools
 
 
 class FlannConan(ConanFile):
-    name            = "flann"
-    license         = "BSD"
-    url             = "http://www.cs.ubc.ca/research/flann/"
-    settings        = "os", "compiler", "build_type", "arch"
-    options         = {"shared": [True, False]}
-    default_options = "shared=True"
-    generators      = "cmake"
-    exports         = "patch*"
+    name            = 'flann'
+    license         = 'BSD'
+    url             = 'http://www.cs.ubc.ca/research/flann/'
+    settings        = 'os', 'compiler', 'build_type', 'arch'
+    options         = {'shared': [True, False]}
+    default_options = 'shared=True'
+    generators      = 'cmake'
+    exports         = 'patch*'
     requires = (
         'gtest/[>=1.8.0]@lasote/stable',
     )
@@ -31,8 +31,8 @@ class FlannConan(ConanFile):
             tools.unzip(archive)
             shutil.move(f'flann-{self.version}', 'flann-src')
         else:
-            self.run("git clone https://github.com/mariusmuja/flann flann-src")
-            self.run("cd flann-src && git checkout %s"%(self.version))
+            self.run('git clone https://github.com/mariusmuja/flann flann-src')
+            self.run(f'cd flann-src && git checkout {self.version}')
 
         patch_file = f'patch-{self.version}-{self.settings.os}.patch'
         if os.path.exists(patch_file):
@@ -53,4 +53,6 @@ class FlannConan(ConanFile):
         pass
 
     def package_info(self):
+        self.cpp_info.libs += ['flann', 'flann_cpp_s', 'flann_s']
+
         pass
