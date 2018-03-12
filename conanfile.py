@@ -39,13 +39,13 @@ class FlannConan(ConanFile):
             tools.patch(patch_file=patch_file, base_path='flann-src')
 
     def build(self):
-
-        args  = []
-        args.append('-DBUILD_SHARED_LIBS:BOOL=%s'%('TRUE' if self.options.shared else 'FALSE'))
-        args.append('-DGTEST_ROOT:PATH=%s'%self.deps_cpp_info['gtest'].rootpath)
-
         cmake = CMake(self)
-        cmake.configure(source_folder='flann-src', args=args)
+
+        cmake.definitions['BUILD_SHARED_LIBS:BOOL'] = 'TRUE' if self.options.shared else 'FALSE'
+        cmake.definitions['CMAKE_CXX_FLAGS:STRING'] = '-fPIC'
+        cmake.definitions['GTEST_ROOT:PATH'] = self.deps_cpp_info['gtest'].rootpath
+
+        cmake.configure(source_folder='flann-src')
         cmake.build()
         cmake.install()
 
