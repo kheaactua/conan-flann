@@ -7,8 +7,12 @@ class FlannConan(ConanFile):
     license         = 'BSD'
     url             = 'http://www.cs.ubc.ca/research/flann/'
     settings        = 'os', 'compiler', 'build_type', 'arch'
-    options         = {'shared': [True, False]}
-    default_options = 'shared=True'
+    options         = {
+        'shared': [True, False],
+        'fPIC':   [True, False],
+        'cxx11':  [True, False],
+    }
+    default_options = 'shared=True', 'fPIC=True', 'cxx11=True'
     generators      = 'cmake'
     exports         = 'patch*'
     requires = (
@@ -42,8 +46,17 @@ class FlannConan(ConanFile):
         cmake = CMake(self)
 
         cmake.definitions['BUILD_SHARED_LIBS:BOOL'] = 'TRUE' if self.options.shared else 'FALSE'
-        cmake.definitions['CMAKE_CXX_FLAGS:STRING'] = '-fPIC'
         cmake.definitions['GTEST_ROOT:PATH'] = self.deps_cpp_info['gtest'].rootpath
+
+        cxx_flags = []
+        if self.options.fPIC:
+            cxx_flags.append('-fPIC')
+        if self.options.cxx11:
+            cxx_flags.append('-std=c++11')
+        if self.settings.compiler == 'gcc':
+            cxx_flags.append('-frecord-gcc-switches')
+
+        cmake.definitions['CMAKE_CXX_FLAGS:STRING'] = ' '.join(cxx_flags)
 
         cmake.configure(source_folder='flann-src')
         cmake.build()
