@@ -15,9 +15,11 @@ class FlannConan(ConanFile):
     default_options = 'shared=True', 'fPIC=True', 'cxx11=True'
     generators      = 'cmake'
     exports         = 'patch*'
-    requires = (
-        'gtest/[>=1.8.0]@lasote/stable',
-    )
+    requires = 'gtest/[>=1.8.0]@lasote/stable', 'helpers/[>=0.1]@ntc/stable'
+
+    def config_options(self):
+        if self.settings.compiler == "Visual Studio":
+            self.options.remove("fPIC")
 
     def source(self):
         hashes = {
@@ -42,19 +44,25 @@ class FlannConan(ConanFile):
         if os.path.exists(patch_file):
             tools.patch(patch_file=patch_file, base_path='flann-src')
 
+        if self.settings.compiler == 'gcc':
+            import cmake_helpers
+            cmake_helpers.wrapCMakeFile(os.path.join(self.source_folder, 'flann-src'), output_func=self.output.info)
+
     def build(self):
         cmake = CMake(self)
 
         cmake.definitions['BUILD_SHARED_LIBS:BOOL'] = 'TRUE' if self.options.shared else 'FALSE'
         cmake.definitions['GTEST_ROOT:PATH'] = self.deps_cpp_info['gtest'].rootpath
 
-        cxx_flags = []
-        if self.options.fPIC:
-            cxx_flags.append('-fPIC')
+        if 'fPIC' in self.options and self.options.fPIC:
+            cmake.definitions['CMAKE_POSITION_INDEPENDENT_CODE'] = 'ON'
+
+        # Not sure this has any impact in flann
         if self.options.cxx11:
-            cxx_flags.append('-std=c++11')
+            cmake.definitions['CMAKE_CXX_STANDARD'] = 11
+
         if self.settings.compiler == 'gcc':
-            cxx_flags.append('-frecord-gcc-switches')
+            cmake.definitions['ADDITIONAL_CXX_FLAGS:STRING'] = '-frecord-gcc-switches'
 
         cmake.definitions['CMAKE_CXX_FLAGS:STRING'] = ' '.join(cxx_flags)
 
@@ -75,7 +83,5 @@ class FlannConan(ConanFile):
             suffix = 'lib'
 
         self.cpp_info.libs += list(map(lambda lib: f'{prefix}{lib}.{suffix}', libs))
-
-        pass
 
 # vim: ts=4 sw=4 expandtab ffs=unix ft=python foldmethod=marker :
