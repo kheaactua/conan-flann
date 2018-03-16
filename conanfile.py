@@ -64,7 +64,11 @@ class FlannConan(ConanFile):
         if self.settings.compiler == 'gcc':
             cmake.definitions['ADDITIONAL_CXX_FLAGS:STRING'] = '-frecord-gcc-switches'
 
-        cmake.definitions['CMAKE_CXX_FLAGS:STRING'] = ' '.join(cxx_flags)
+        # Debug
+        s = '\nCMake Definitions:\n'
+        for k,v in cmake.definitions.items():
+            s += ' - %s=%s\n'%(k, v)
+        self.output.info(s)
 
         cmake.configure(source_folder='flann-src')
         cmake.build()
