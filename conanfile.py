@@ -15,7 +15,7 @@ class FlannConan(ConanFile):
     default_options = 'shared=True', 'fPIC=True', 'cxx11=True'
     generators      = 'cmake'
     exports         = 'patch*'
-    requires = 'gtest/[>=1.8.0]@lasote/stable', 'helpers/[>=0.1]@ntc/stable'
+    requires = 'gtest/[>=1.8.0]@lasote/stable', 'helpers/[>=0.2]@ntc/stable'
 
     def config_options(self):
         if self.settings.compiler == "Visual Studio":
@@ -78,14 +78,12 @@ class FlannConan(ConanFile):
         pass
 
     def package_info(self):
-        libs = ['flann', 'flann_cpp_s', 'flann_s']
-        if 'Linux' == self.settings.os:
-            prefix = 'lib'
-            suffix = 'so' if self.options.shared else 'a'
-        else:
-            prefix = ''
-            suffix = 'lib'
+        self.cpp_info.libs = tools.collect_libs(self)
 
-        self.cpp_info.libs += list(map(lambda lib: f'{prefix}{lib}.{suffix}', libs))
+        # Populate the pkg-config environment variables
+        import site; site.addsitedir(self.deps_cpp_info['helpers'].rootpath) # Compensate for #2644
+        from platform_helpers import adjustPath, appendPkgConfigPath
+        self.env_info.PKG_CONFIG_FLANN_PREFIX = adjustPath(self.package_folder)
+        appendPkgConfigPath(adjustPath(os.path.join(self.package_folder, 'lib', 'pkgconfig')), self.env_info)
 
 # vim: ts=4 sw=4 expandtab ffs=unix ft=python foldmethod=marker :
