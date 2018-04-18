@@ -15,7 +15,7 @@ class FlannConan(ConanFile):
     default_options = 'shared=True', 'fPIC=True', 'cxx11=True'
     generators      = 'cmake'
     exports         = 'patch*'
-    requires = 'gtest/[>=1.8.0]@lasote/stable', 'helpers/[>=0.2]@ntc/stable'
+    requires = 'gtest/[>=1.8.0]@lasote/stable', 'helpers/[>=0.3]@ntc/stable'
 
     def config_options(self):
         if self.settings.compiler == "Visual Studio":
