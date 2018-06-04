@@ -2,8 +2,10 @@
 # -*- coding: future_fstrings -*-
 # -*- coding: utf-8 -*-
 
-import os, shutil
+import os, re, shutil
+from io import StringIO # Python 2 and 3 compatible
 from conans import ConanFile, CMake, tools
+from conans.model.version import Version
 
 
 class FlannConan(ConanFile):
@@ -48,9 +50,30 @@ class FlannConan(ConanFile):
         if os.path.exists(patch_file):
             tools.patch(patch_file=patch_file, base_path='flann-src')
 
+        self.fix_cmake_311_issue()
+
         if self.settings.compiler == 'gcc':
             import cmake_helpers
             cmake_helpers.wrapCMakeFile(os.path.join(self.source_folder, 'flann-src'), output_func=self.output.info)
+
+    def fix_cmake_311_issue(self):
+        """ add_library(name TYPE "") is no longer valid as of CMake >=3.11 """
+
+        mybuf = StringIO()
+        self.run('cmake --version', output=mybuf)
+        outp = mybuf.getvalue()
+        m1 = re.match(r'cmake version (?P<version>\d+\.\d+.\d+).*', outp)
+        if m1:
+            if Version(str(m1.group('version'))) > '3.11':
+                with open(os.path.join(self.source_folder, 'flann-src', 'src', 'cpp', 'empty.cpp'), 'w') as f:
+                    f.write('/* empty */')
+                with open(os.path.join(self.source_folder, 'flann-src', 'src', 'cpp', 'CMakeLists.txt'), 'r') as f: data = f.read()
+                data = data.replace('add_library(flann_cpp SHARED "")', 'add_library(flann_cpp SHARED "empty.cpp")')
+                data = data.replace('add_library(flann SHARED "")', 'add_library(flann SHARED "empty.cpp")')
+                with open(os.path.join(self.source_folder, 'flann-src', 'src', 'cpp', 'CMakeLists.txt'), 'w') as f:
+                    f.write(data)
+        else:
+            self.info.error('Could not detect CMake version')
 
     def build(self):
         cmake = CMake(self)
