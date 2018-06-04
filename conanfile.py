@@ -21,7 +21,7 @@ class FlannConan(ConanFile):
     default_options = 'shared=True', 'fPIC=True', 'cxx11=True'
     generators      = 'cmake'
     exports         = 'patch*'
-    requires = 'gtest/[>=1.8.0]@bincrafters/stable', 'helpers/[>=0.3]@ntc/stable'
+    requires        = 'gtest/[>=1.8.0]@bincrafters/stable', 'helpers/[>=0.3]@ntc/stable'
 
     def config_options(self):
         if self.settings.compiler == "Visual Studio":
@@ -75,7 +75,8 @@ class FlannConan(ConanFile):
         else:
             self.info.error('Could not detect CMake version')
 
-    def build(self):
+    def setup_cmake(self):
+
         cmake = CMake(self)
 
         cmake.definitions['BUILD_SHARED_LIBS:BOOL'] = 'TRUE' if self.options.shared else 'FALSE'
@@ -91,6 +92,11 @@ class FlannConan(ConanFile):
         if self.settings.compiler == 'gcc':
             cmake.definitions['ADDITIONAL_CXX_FLAGS:STRING'] = '-frecord-gcc-switches'
 
+        return cmake
+
+    def build(self):
+        cmake = self.setup_cmake()
+
         # Debug
         s = '\nCMake Definitions:\n'
         for k,v in cmake.definitions.items():
@@ -99,18 +105,19 @@ class FlannConan(ConanFile):
 
         cmake.configure(source_folder='flann-src')
         cmake.build()
-        cmake.install()
 
     def package(self):
-        pass
+        cmake = self.setup_cmake()
+        cmake.configure(source_folder='flann-src')
+        cmake.install()
 
     def package_info(self):
         self.cpp_info.libs = tools.collect_libs(self)
 
         # Populate the pkg-config environment variables
-        import site; site.addsitedir(self.deps_cpp_info['helpers'].rootpath) # Compensate for #2644
-        from platform_helpers import adjustPath, appendPkgConfigPath
-        self.env_info.PKG_CONFIG_FLANN_PREFIX = adjustPath(self.package_folder)
-        appendPkgConfigPath(adjustPath(os.path.join(self.package_folder, 'lib', 'pkgconfig')), self.env_info)
+        with tools.pythonpath(self):
+            from platform_helpers import adjustPath, appendPkgConfigPath
+            self.env_info.PKG_CONFIG_FLANN_PREFIX = adjustPath(self.package_folder)
+            appendPkgConfigPath(adjustPath(os.path.join(self.package_folder, 'lib', 'pkgconfig')), self.env_info)
 
 # vim: ts=4 sw=4 expandtab ffs=unix ft=python foldmethod=marker :
