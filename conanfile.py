@@ -21,11 +21,17 @@ class FlannConan(ConanFile):
     default_options = 'shared=True', 'fPIC=True', 'cxx11=True'
     generators      = 'cmake'
     exports         = 'patch*'
-    requires        = 'gtest/[>=1.8.0]@bincrafters/stable', 'helpers/[>=0.3]@ntc/stable'
+    requires        = 'helpers/[>=0.3]@ntc/stable'
 
     def config_options(self):
-        if self.settings.compiler == "Visual Studio":
+        if 'Visual Studio' == self.settings.compiler:
             self.options.remove("fPIC")
+
+    def requirements(self):
+        if 'Visual Studio' == self.settings.compiler and Version(str(self.version)) <= '12':
+            self.requires('gtest/1.8.0@bincrafters/stable')
+        else:
+            self.requires('gtest/[>=1.8.0]@bincrafters/stable')
 
     def source(self):
         hashes = {
@@ -43,8 +49,8 @@ class FlannConan(ConanFile):
             tools.unzip(archive)
             shutil.move(f'flann-{self.version}', 'flann-src')
         else:
-            self.run('git clone https://github.com/mariusmuja/flann flann-src')
-            self.run(f'cd flann-src && git checkout {self.version}')
+            g = tools.Git('flann-src')
+            g.clone('https://github.com/mariusmuja/flann', branch=self.version)
 
         patch_file = f'patch-{self.version}-{self.settings.os}.patch'
         if os.path.exists(patch_file):
@@ -52,7 +58,7 @@ class FlannConan(ConanFile):
 
         self.fix_cmake_311_issue()
 
-        if self.settings.compiler == 'gcc':
+        if 'gcc' == self.settings.compiler:
             import cmake_helpers
             cmake_helpers.wrapCMakeFile(os.path.join(self.source_folder, 'flann-src'), output_func=self.output.info)
 
@@ -89,7 +95,7 @@ class FlannConan(ConanFile):
         if self.options.cxx11:
             cmake.definitions['CMAKE_CXX_STANDARD'] = 11
 
-        if self.settings.compiler == 'gcc':
+        if 'gcc' == self.settings.compiler:
             cmake.definitions['ADDITIONAL_CXX_FLAGS:STRING'] = '-frecord-gcc-switches'
 
         return cmake
