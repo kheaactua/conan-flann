@@ -12,6 +12,7 @@ class FlannConan(ConanFile):
     name            = 'flann'
     license         = 'BSD'
     url             = 'http://www.cs.ubc.ca/research/flann/'
+    description     = 'Fast Library for Approximate Nearest Neighbors'
     settings        = 'os', 'compiler', 'build_type', 'arch'
     options         = {
         'shared': [True, False],
