@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: future_fstrings -*-
 # -*- coding: utf-8 -*-
 
 import os, re, shutil
@@ -34,6 +33,11 @@ class FlannConan(ConanFile):
         else:
             self.requires('gtest/[>=1.8.0]@bincrafters/stable')
 
+        if Version(str(self.version)) > '1.8.4' and tools.os_info.is_windows:
+            self.requires('lz4/[>=1.8.3]@ntc/binary')
+        else:
+            self.requires('lz4/[>=1.8.3]@ntc/stable')
+
     def source(self):
         hashes = {
             '1.8.4': '774b74580e3cbc5b0d45c6ec345a64ae',
@@ -41,19 +45,19 @@ class FlannConan(ConanFile):
         }
 
         if self.version in hashes:
-            archive = f'{self.version}.tar.gz'
+            archive = '%s.tar.gz'%self.version
             tools.download(
-                url=f'https://github.com/mariusmuja/flann/archive/{archive}',
+                url='https://github.com/mariusmuja/flann/archive/%s'%archive,
                 filename=archive
             )
             tools.check_md5(archive, hashes[self.version])
             tools.unzip(archive)
-            shutil.move(f'flann-{self.version}', 'flann-src')
+            shutil.move('flann-%s'%self.version, 'flann-src')
         else:
             g = tools.Git('flann-src')
             g.clone('https://github.com/mariusmuja/flann', branch=self.version)
 
-        patch_file = f'patch-{self.version}-{self.settings.os}.patch'
+        patch_file = 'patch-%s-%s.patch'%(self.version, self.settings.os)
         if os.path.exists(patch_file):
             tools.patch(patch_file=patch_file, base_path='flann-src')
 
@@ -83,7 +87,6 @@ class FlannConan(ConanFile):
             self.info.error('Could not detect CMake version')
 
     def setup_cmake(self):
-
         cmake = CMake(self)
 
         cmake.definitions['BUILD_SHARED_LIBS:BOOL'] = 'TRUE' if self.options.shared else 'FALSE'
