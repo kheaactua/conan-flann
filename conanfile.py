@@ -9,6 +9,8 @@ from conans.model.version import Version
 
 class FlannConan(ConanFile):
     name            = 'flann'
+    version         = '1.8.4'
+    md5hash         = '73adef1c7bf8e8b978987e7860926ea6'
     license         = 'BSD'
     url             = 'http://www.cs.ubc.ca/research/flann/'
     description     = 'Fast Library for Approximate Nearest Neighbors'
@@ -39,23 +41,14 @@ class FlannConan(ConanFile):
             self.requires('lz4/[>=1.8.3]@ntc/stable')
 
     def source(self):
-        hashes = {
-            '1.8.4': '774b74580e3cbc5b0d45c6ec345a64ae',
-            '1.9.1': '73adef1c7bf8e8b978987e7860926ea6',
-        }
-
-        if self.version in hashes:
-            archive = '%s.tar.gz'%self.version
-            tools.download(
-                url='https://github.com/mariusmuja/flann/archive/%s'%archive,
-                filename=archive
-            )
-            tools.check_md5(archive, hashes[self.version])
-            tools.unzip(archive)
-            shutil.move('flann-%s'%self.version, 'flann-src')
-        else:
-            g = tools.Git('flann-src')
-            g.clone('https://github.com/mariusmuja/flann', branch=self.version)
+        archive = '%s.tar.gz'%self.version
+        tools.download(
+            url='https://github.com/mariusmuja/flann/archive/%s'%archive,
+            filename=archive
+        )
+        tools.check_md5(archive, self.md5hash)
+        tools.unzip(archive)
+        shutil.move('flann-%s'%self.version, 'flann-src')
 
         patch_file = 'patch-%s-%s.patch'%(self.version, self.settings.os)
         if os.path.exists(patch_file):
