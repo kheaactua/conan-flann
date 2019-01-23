@@ -9,8 +9,7 @@ from conans.model.version import Version
 
 class FlannConan(ConanFile):
     name            = 'flann'
-    version         = '1.8.4'
-    md5hash         = '73adef1c7bf8e8b978987e7860926ea6'
+    version         = 'latest'
     license         = 'BSD'
     url             = 'http://www.cs.ubc.ca/research/flann/'
     description     = 'Fast Library for Approximate Nearest Neighbors'
@@ -35,24 +34,14 @@ class FlannConan(ConanFile):
         else:
             self.requires('gtest/[>=1.8.0]@bincrafters/stable')
 
-        if Version(str(self.version)) > '1.8.4' and tools.os_info.is_windows:
+        if tools.os_info.is_windows:
             self.requires('lz4/[>=1.8.3]@ntc/binary')
         else:
             self.requires('lz4/[>=1.8.3]@ntc/stable')
 
     def source(self):
-        archive = '%s.tar.gz'%self.version
-        tools.download(
-            url='https://github.com/mariusmuja/flann/archive/%s'%archive,
-            filename=archive
-        )
-        tools.check_md5(archive, self.md5hash)
-        tools.unzip(archive)
-        shutil.move('flann-%s'%self.version, 'flann-src')
-
-        patch_file = 'patch-%s-%s.patch'%(self.version, self.settings.os)
-        if os.path.exists(patch_file):
-            tools.patch(patch_file=patch_file, base_path='flann-src')
+        g = tools.Git(folder='flann-src')
+        g.clone('https://github.com/mariusmuja/flann.git', branch='master')
 
         self.fix_cmake_311_issue()
 
@@ -101,6 +90,22 @@ class FlannConan(ConanFile):
         cmake = self.setup_cmake()
 
         # Debug
+        pkg_config_vars = {}
+        s = '\nBase Environment:\n'
+        for k,v in os.environ.items():
+            s += ' - %s=%s\n'%(k, v)
+            if 'PKG_CONFIG' in k:
+                pkg_config_vars[k] = v
+        self.output.info(s)
+
+        if len(pkg_config_vars):
+            s = '\nPkg-Config Specific Environment:\n'
+            for k,v in pkg_config_vars.items():
+                if k != 'PKG_CONFIG_PATH':
+                    s += ' - %s=%s\n'%(k, v)
+            if 'PKG_CONFIG_PATH' in pkg_config_vars:
+                s += ' - PKG_CONFIG_PATH:\n  - %s'%('\n  - '.join(pkg_config_vars['PKG_CONFIG_PATH'].split(';' if tools.os_info.is_windows else ':')))
+            self.output.info(s)
         s = '\nCMake Definitions:\n'
         for k,v in cmake.definitions.items():
             s += ' - %s=%s\n'%(k, v)
